@@ -32,8 +32,8 @@ class Player(BasePlayer):
     
     #station weights
     st_degree_weight = 10
-    st_distance_weight = 15
-    st_order_weight = 5
+    st_distance_weight = 50
+    st_order_weight = 40
 
     def __init__(self, state):
         """
@@ -110,16 +110,18 @@ class Player(BasePlayer):
         g = state.get_graph()
         scores = [0 for _ in range(GRAPH_SIZE)]
         for n in g.nodes():
-            # deg
-            deg = g.degree(n)
-            scores[n] += (deg / 8.0) * self.st_degree_weight
-            # orders
-            order_count = self.get_order_count(n)
-            scores[n] += (order_count / (GRAPH_SIZE/ state.get_time() * ORDER_CHANCE)) * self.st_order_weight
-            # distance
-            station_lengths = [self.get_distance(n, st) for st in self.stations]
-            scores[n] += sum(station_lengths) / (len(station_lengths) * GRAPH_SIZE ** 0.5) * self.st_distance_weight
-
+            if n not in self.stations:
+                # deg
+                deg = g.degree(n)
+                scores[n] += (deg / 8.0) * self.st_degree_weight
+                # orders
+                order_count = self.get_order_count(n)
+                scores[n] += (order_count / (GRAPH_SIZE/ state.get_time() * ORDER_CHANCE)) * self.st_order_weight
+                # distance
+                station_lengths = [self.get_distance(n, st) for st in self.stations]
+                scores[n] += sum(station_lengths) / (len(station_lengths) * GRAPH_SIZE ** 0.5) * self.st_distance_weight
+            if self.hasCloseNeighbor(state, n):
+                scores[n] *= -1
         maxScore = 0
         maxNode = None
         for i in range(len(scores)):
@@ -153,7 +155,7 @@ class Player(BasePlayer):
         G = state.get_graph()
         for node in self.stations:
             distance = self.get_distance(station, node)
-            if distance < self.maxPathLength/4:
+            if distance < self.maxPathLength/7:
                 return True
         return False
 
