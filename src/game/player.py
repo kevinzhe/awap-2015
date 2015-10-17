@@ -130,17 +130,17 @@ class Player(BasePlayer):
                 maxNode = i
         return maxNode
 
-        destinations = self.destinationCounts(state)
-        maxCount = 0
-        curCount = 0
-        station = None
-        for node in destinations:
-            curCount = destinations[node]
-            if node not in self.stations:
-                if curCount >= maxCount and not self.hasCloseNeighbor(state, node):
-                    maxCount = curCount
-                    station = node
-        return station
+        # destinations = self.destinationCounts(state)
+        # maxCount = 0
+        # curCount = 0
+        # station = None
+        # for node in destinations:
+        #     curCount = destinations[node]
+        #     if node not in self.stations:
+        #         if curCount >= maxCount and not self.hasCloseNeighbor(state, node):
+        #             maxCount = curCount
+        #             station = node
+        # return station
 
     def get_next_station_node_kevin(self):
         maxNode = None
@@ -183,6 +183,7 @@ class Player(BasePlayer):
         """
         
         G = state.get_graph()
+        #self.update_orders(G)
         self.money = state.get_money()
         self.update_orders(state)
         
@@ -320,5 +321,6 @@ class Player(BasePlayer):
     def get_order_count(self, node_num):
         p = self.order_counts[node_num]
         return len(p)
+
 
 
