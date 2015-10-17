@@ -24,6 +24,9 @@ class Player(BasePlayer):
     # station building
     station_factor = 1.2
 
+    # order money
+    money_threshold = 15
+
     # order counting
     order_counts = None
 
@@ -72,8 +75,6 @@ class Player(BasePlayer):
         self.last_build = 0
         self.build_money = STARTING_MONEY
 
-
-
         return
 
 
@@ -92,7 +93,7 @@ class Player(BasePlayer):
         for node in orders:
             if node not in nodeCounts: 
                 nodeCounts[node] = 0
-            nodeCounts[node] = 1
+            nodeCounts[node] += 1
         return nodeCounts
 
 
@@ -153,7 +154,9 @@ class Player(BasePlayer):
         commands = []
 
         if (est_time < 1000):
-            self.to_build.append(self.get_next_station_node(state))
+            s = self.get_next_station_node(state)
+            if s != None:
+                self.to_build.append(s)
 
         new_to_build = []
         for s in self.to_build:
@@ -173,7 +176,7 @@ class Player(BasePlayer):
             list(itertools.product(
             state.get_pending_orders(), self.stations)))
 
-        station_order_pairs = filter(lambda a: a[2] > 0, station_order_pairs)
+        station_order_pairs = filter(lambda a: a[2] > self.money_threshold, station_order_pairs)
 
         station_order_pairs.sort(lambda a,b: self.cmp(a, b))
 
