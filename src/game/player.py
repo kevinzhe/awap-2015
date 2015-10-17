@@ -69,6 +69,8 @@ class Player(BasePlayer):
         self.last_build = 0
         self.build_money = STARTING_MONEY
 
+
+
         return
 
 
@@ -88,7 +90,7 @@ class Player(BasePlayer):
             if node not in nodeCounts: 
                 nodeCounts[nodes] = 0
             nodeCounts[nodes] = 1
-        return nodeCounts[nodes]
+        return nodeCounts
 
 
     #return the next node where we can build a station
@@ -104,6 +106,9 @@ class Player(BasePlayer):
                     maxCount = curCount
                     station = node
         return station
+
+    def hasCloseNeighbor(self, state, station):
+        pass
 
     # Checks if we can use a given path
     def path_is_valid(self, state, path):
