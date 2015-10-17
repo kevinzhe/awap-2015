@@ -66,7 +66,7 @@ class Game:
         self.random.seed('I am an order seed!')
 
         hubs = deepcopy(G.nodes())
-        random.shuffle(hubs)
+        self.random.shuffle(hubs)
         self.hubs = hubs[:HUBS]
 
     def to_dict(self):
