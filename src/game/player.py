@@ -34,8 +34,12 @@ class Player(BasePlayer):
             elif degree == maxDegree:
                 maxVertex.append(vtx)
 
-
-
+        self.degreeDict = dict()
+        for vtx in nodes:
+            degree = G.degree(vtx)
+            if degree not in self.degreeDict:
+                self.degreeDict[degree] = set()
+            self.degreeDict[degree].add(vtx)
         return
 
     # Checks if we can use a given path
