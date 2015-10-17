@@ -54,7 +54,14 @@ class Player(BasePlayer):
         self.to_build = [bestNode]
 
         self.build_cost = INIT_BUILD_COST
-
+        
+        self.degreeDict = dict()
+        for vtx in nodes:
+            degree = G.degree(vtx)
+            if degree not in self.degreeDict:
+                self.degreeDict[degree] = set()
+            self.degreeDict[degree].add(vtx)
+            
         return
 
     # get the distance between two nodes
