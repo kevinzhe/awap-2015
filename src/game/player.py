@@ -71,9 +71,38 @@ class Player(BasePlayer):
 
         return
 
+
+
     # get the distance between two nodes
     def get_distance(self, node1, node2):
         return self.distances.get(node1).get(node2)
+
+    # check distance between destination with most degree and curStation
+    def destinationCounts(self, state):
+        pending = state.get_pending_orders()
+        active = state.get_active_orders()
+        orders = map(lambda order: order.get_node(), pending).extend(map(lambda t: t[0].get_node(), f2))
+        nodeCounts = dict()
+        for node in orders:
+            if node not in nodeCounts: 
+                nodeCounts[nodes] = 0
+            nodeCounts[nodes] = 1
+        return nodeCounts[nodes]
+
+
+    #return the next node where we can build a station
+    def get_next_station_node(self, state):
+        destinations = destinationCounts(state)
+        maxCount = 0
+        curCount = 0
+        station = None
+        for node in destinationCounts:
+            curCount = destinationCounts[node]
+            if node not in self.stations:
+                if curCount >= maxCount:
+                    maxCount = curCount
+                    station = node
+        return station
 
     # Checks if we can use a given path
     def path_is_valid(self, state, path):
