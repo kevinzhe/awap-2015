@@ -114,6 +114,15 @@ class Player(BasePlayer):
                     station = node
         return station
 
+    def get_next_station_node_kevin(self):
+        maxNode = None
+        maxOrders = 0
+        for node in range(GRAPH_SIZE):
+            if self.get_order_count(node) > maxOrders:
+                maxOrders = self.get_order_count(node)
+                maxNode = node
+        return maxNode
+
     def hasCloseNeighbor(self, state, station):
         G = state.get_graph()
         for node in self.stations:
@@ -147,6 +156,7 @@ class Player(BasePlayer):
         
         G = state.get_graph()
         self.money = state.get_money()
+        self.update_orders(state)
         
         if (len(self.stations) < HUBS and
             self.money >= self.build_cost and
@@ -271,19 +281,16 @@ class Player(BasePlayer):
                     ])
         return None
     
-    def update_orders(state):
+    def update_orders(self, state):
         '''Return a list of ({PENDING},{FUFILLED}) tuples'''
         if self.order_counts is None:
-            self.order_counts = [(set(), set()) for _ in range(GRAPH_SIZE)]
+            self.order_counts = [set() for _ in range(GRAPH_SIZE)]
         for o in state.get_pending_orders():
-            (p,f) = self.order_counts[o.node]
+            p = self.order_counts[o.node]
             p.add(o.id)
-        for o in state.get_active_orders():
-            (p,f) = self.order_counts[o.node]
-            f.add(o.id)
 
-    def get_order_count(node_num):
-        p,f = self.order_counts[node_num]
-        return len(p) + len(f)
+    def get_order_count(self, node_num):
+        p = self.order_counts[node_num]
+        return len(p)
 
 
