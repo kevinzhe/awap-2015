@@ -69,8 +69,9 @@ class Player(BasePlayer):
         self.last_build = 0
         self.build_money = STARTING_MONEY
 
-
-
+        self.edges = G.edges()
+        self.pathLenth = [self.get_distance(edge[0], edge[1]) for edge in self.edges]
+        self.maxPathLength = max(self.pathLenth)
         return
 
 
@@ -89,7 +90,7 @@ class Player(BasePlayer):
         for node in orders:
             if node not in nodeCounts: 
                 nodeCounts[node] = 0
-            nodeCounts[node] = 1
+            nodeCounts[node] += 1
         return nodeCounts
 
 
@@ -108,8 +109,12 @@ class Player(BasePlayer):
         return station
 
     def hasCloseNeighbor(self, state, station):
-        pass
-
+        G = state.get_graph()
+        for node in self.stations:
+            distance = self.get_distance(station, node)
+            if distance < self.maxPathLength/4:
+                return True
+        return False
     # Checks if we can use a given path
     def path_is_valid(self, state, path):
         graph = state.get_graph()
@@ -150,6 +155,7 @@ class Player(BasePlayer):
         commands = []
 
         if (est_time < 1000):
+            #if not self.hasCloseNeighbor(state, self.get_next_station_node(state)):
             self.to_build.append(self.get_next_station_node(state))
 
         new_to_build = []
