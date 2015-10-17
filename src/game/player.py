@@ -22,7 +22,7 @@ class Player(BasePlayer):
     station_weight = 100
 
     # station building
-    station_factor = 1.2
+    station_factor = 1.3
 
     # order money
     money_threshold = 15
@@ -108,11 +108,20 @@ class Player(BasePlayer):
         station = None
         for node in destinations:
             curCount = destinations[node]
-            if node not in self.stations and self.hasCloseNeighbor(state, node):
-                if curCount >= maxCount:
+            if node not in self.stations:
+                if curCount >= maxCount and not self.hasCloseNeighbor(state, node):
                     maxCount = curCount
                     station = node
         return station
+
+    def get_next_station_node_kevin(self):
+        maxNode = None
+        maxOrders = 0
+        for node in range(GRAPH_SIZE):
+            if self.get_order_count(node) > maxOrders:
+                maxOrders = self.get_order_count(node)
+                maxNode = node
+        return maxNode
 
     def hasCloseNeighbor(self, state, station):
         G = state.get_graph()
@@ -148,8 +157,10 @@ class Player(BasePlayer):
         G = state.get_graph()
         #self.update_orders(G)
         self.money = state.get_money()
+        self.update_orders(state)
         
-        if (self.money >= self.build_cost and
+        if (len(self.stations) < HUBS and
+            self.money >= self.build_cost and
             state.get_time() != self.last_build and
             self.money != self.build_money):
             slope = 1.0 * ((self.money - self.build_money) /
@@ -160,12 +171,12 @@ class Player(BasePlayer):
         else:
             est_time = 10000
 
-        commands = []
-
         if (est_time < 1000):
             s = self.get_next_station_node(state)
-            if s != None:
+            if s != None: # and not self.hasCloseNeighbor(state,s):
                 self.to_build.append(s)
+
+        commands = []
 
         new_to_build = []
         for s in self.to_build:
@@ -174,6 +185,7 @@ class Player(BasePlayer):
                 self.money -= self.build_cost
                 self.build_cost *= BUILD_FACTOR
                 self.stations.append(s)
+                self.station_factor -= 0.05
                 self.last_build = state.get_time()
                 self.build_money = self.money
             else:
@@ -241,7 +253,7 @@ class Player(BasePlayer):
         else:
             score += 10**15
         # prefer low degree nodes
-        score += self.degree_weight * len(G.neighbors(node))
+        score += self.degree_weight * G.degree(node)
         # don't go through other stations
         if G.node[node]['is_station']: score += self.station_weight
 
@@ -273,16 +285,14 @@ class Player(BasePlayer):
     def update_orders(self, state):
         '''Return a list of ({PENDING},{FUFILLED}) tuples'''
         if self.order_counts is None:
-            self.order_counts = [(set(), set()) for _ in range(GRAPH_SIZE)]
+            self.order_counts = [set() for _ in range(GRAPH_SIZE)]
         for o in state.get_pending_orders():
-            (p,f) = self.order_counts[o.node]
+            p = self.order_counts[o.node]
             p.add(o.id)
-        for o in state.get_active_orders():
-            (p,f) = self.order_counts[o.node]
-            f.add(o.id)
 
     def get_order_count(self, node_num):
-        p,f = self.order_counts[node_num]
-        return len(p) + len(f)
+        p = self.order_counts[node_num]
+        return len(p)
+
 
 

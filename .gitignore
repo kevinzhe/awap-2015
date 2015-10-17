@@ -7,3 +7,5 @@ venv
 env
 
 src/game/settings.py
+
+awap.tar
