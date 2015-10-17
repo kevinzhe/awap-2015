@@ -24,6 +24,12 @@ class Player(BasePlayer):
     # station building
     station_factor = 1.2
 
+    # order money
+    money_threshold = 15
+
+    # order counting
+    order_counts = None
+
     def __init__(self, state):
         """
         Initializes your Player. You can set up persistent state, do analysis
@@ -122,7 +128,7 @@ class Player(BasePlayer):
             if graph.edge[path[i]][path[i + 1]]['in_use']:
                 return False
         return True
-
+    
     def step(self, state):
         # print self.money, self.build_money, self.build_cost
         """
@@ -137,10 +143,10 @@ class Player(BasePlayer):
             Each command should be generated via self.send_command or
             self.build_command. The commands are evaluated in order.
         """
-
+        
         G = state.get_graph()
         self.money = state.get_money()
-
+        
         if (self.money >= self.build_cost and
             state.get_time() != self.last_build and
             self.money != self.build_money):
@@ -155,8 +161,9 @@ class Player(BasePlayer):
         commands = []
 
         if (est_time < 1000):
-            #if not self.hasCloseNeighbor(state, self.get_next_station_node(state)):
-            self.to_build.append(self.get_next_station_node(state))
+            s = self.get_next_station_node(state)
+            if s != None:
+                self.to_build.append(s)
 
         new_to_build = []
         for s in self.to_build:
@@ -172,18 +179,24 @@ class Player(BasePlayer):
 
         self.to_build = new_to_build
 
-        station_order_pairs = list(itertools.product(
-            state.get_pending_orders(), self.stations))
+        station_order_pairs = map(lambda a: (a[0], a[1], self.score_order(a[0], a[1], state)),
+            list(itertools.product(
+            state.get_pending_orders(), self.stations)))
 
-        station_order_pairs.sort(lambda a,b: self.cmp(a, b, state))
+        station_order_pairs = filter(lambda a: a[2] > self.money_threshold, station_order_pairs)
+
+        station_order_pairs.sort(lambda a,b: self.cmp(a, b))
 
         paths = set()
+        orders_done = set()
 
-        for (order, station) in station_order_pairs:
-            path = self.find_path(G, station, order.get_node(), paths)
-            if path != None:
-                commands.append(self.send_command(order, path))
-                self.add_path(paths, path)
+        for (order, station, _) in station_order_pairs:
+            if (order not in orders_done):
+                path = self.find_path(G, station, order.get_node(), paths)
+                if path != None:
+                    commands.append(self.send_command(order, path))
+                    self.add_path(paths, path)
+                    orders_done.add(order)
 
         return commands
 
@@ -202,10 +215,11 @@ class Player(BasePlayer):
             paths.add((path[i], path[i+1]))
             paths.add((path[i+1], path[i]))
 
-    def cmp(self, a, b, state):
-        oa, sa = a
-        ob, sb = b
-        return -cmp(self.score_order(oa, sa, state), self.score_order(ob, sb, state))
+    def cmp(self, a, b):
+        # print "    ", a, b
+        _, _, a = a
+        _, _, b = b
+        return -cmp(a, b)
 
     def score_order(self, order, station, state):
         d = self.get_distance(order.get_node(), station)
@@ -253,3 +267,20 @@ class Player(BasePlayer):
                         path + [neighbor],
                     ])
         return None
+    
+    def update_orders(state):
+        '''Return a list of ({PENDING},{FUFILLED}) tuples'''
+        if self.order_counts is None:
+            self.order_counts = [(set(), set()) for _ in range(GRAPH_SIZE)]
+        for o in state.get_pending_orders():
+            (p,f) = self.order_counts[o.node]
+            p.add(o.id)
+        for o in state.get_active_orders():
+            (p,f) = self.order_counts[o.node]
+            f.add(o.id)
+
+    def get_order_count(node_num):
+        p,f = self.order_counts[node_num]
+        return len(p) + len(f)
+
+
