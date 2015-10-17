@@ -86,9 +86,9 @@ class Player(BasePlayer):
         nodeCounts = dict()
         for node in orders:
             if node not in nodeCounts: 
-                nodeCounts[nodes] = 0
-            nodeCounts[nodes] = 1
-        return nodeCounts[nodes]
+                nodeCounts[node] = 0
+            nodeCounts[node] = 1
+        return nodeCounts
 
 
     #return the next node where we can build a station
