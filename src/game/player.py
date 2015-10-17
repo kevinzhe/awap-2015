@@ -24,6 +24,9 @@ class Player(BasePlayer):
     # station building
     station_factor = 1.2
 
+    # order counting
+    order_counts = None
+
     def __init__(self, state):
         """
         Initializes your Player. You can set up persistent state, do analysis
@@ -117,7 +120,7 @@ class Player(BasePlayer):
             if graph.edge[path[i]][path[i + 1]]['in_use']:
                 return False
         return True
-
+    
     def step(self, state):
         # print self.money, self.build_money, self.build_cost
         """
@@ -132,10 +135,10 @@ class Player(BasePlayer):
             Each command should be generated via self.send_command or
             self.build_command. The commands are evaluated in order.
         """
-
+        
         G = state.get_graph()
         self.money = state.get_money()
-
+        
         if (self.money >= self.build_cost and
             state.get_time() != self.last_build and
             self.money != self.build_money):
@@ -254,3 +257,20 @@ class Player(BasePlayer):
                         path + [neighbor],
                     ])
         return None
+    
+    def update_orders(state):
+        '''Return a list of ({PENDING},{FUFILLED}) tuples'''
+        if self.order_counts is None:
+            self.order_counts = [(set(), set()) for _ in range(GRAPH_SIZE)]
+        for o in state.get_pending_orders():
+            (p,f) = self.order_counts[o.node]
+            p.add(o.id)
+        for o in state.get_active_orders():
+            (p,f) = self.order_counts[o.node]
+            f.add(o.id)
+
+    def get_order_count(node_num):
+        p,f = self.order_counts[node_num]
+        return len(p) + len(f)
+
+
