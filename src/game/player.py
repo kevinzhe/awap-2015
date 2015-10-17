@@ -81,7 +81,7 @@ class Player(BasePlayer):
     def destinationCounts(self, state):
         pending = state.get_pending_orders()
         active = state.get_active_orders()
-        orders = map(lambda order: order.get_node(), pending).extend(map(lambda t: t[0].get_node(), f2))
+        orders = map(lambda order: order.get_node(), pending).extend(map(lambda t: t[0].get_node(), active))
         nodeCounts = dict()
         for node in orders:
             if node not in nodeCounts: 
@@ -92,12 +92,12 @@ class Player(BasePlayer):
 
     #return the next node where we can build a station
     def get_next_station_node(self, state):
-        destinations = destinationCounts(state)
+        destinations = self.destinationCounts(state)
         maxCount = 0
         curCount = 0
         station = None
-        for node in destinationCounts:
-            curCount = destinationCounts[node]
+        for node in destinations:
+            curCount = destinations[node]
             if node not in self.stations:
                 if curCount >= maxCount:
                     maxCount = curCount
@@ -144,7 +144,7 @@ class Player(BasePlayer):
         commands = []
 
         if (est_time < 1000):
-            self.to_build.append(self.find_new_station())
+            self.to_build.append(self.get_next_station_node(state))
 
         new_to_build = []
         for s in self.to_build:
