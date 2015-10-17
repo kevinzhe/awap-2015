@@ -22,7 +22,7 @@ class Player(BasePlayer):
     station_weight = 100
 
     # station building
-    station_factor = 1.2
+    station_factor = 1.3
 
     # order money
     money_threshold = 15
@@ -165,6 +165,7 @@ class Player(BasePlayer):
                 self.money -= self.build_cost
                 self.build_cost *= BUILD_FACTOR
                 self.stations.append(s)
+                self.station_factor -= 0.05
                 self.last_build = state.get_time()
                 self.build_money = self.money
             else:
