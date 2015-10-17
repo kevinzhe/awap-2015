@@ -21,6 +21,20 @@ class Player(BasePlayer):
         state : State
             The initial state of the game. See state.py for more information.
         """
+        
+        #Getting the vertex with the maximum degree
+        nodes = G.nodes()
+        maxDegree = 0
+        maxVertex = [] #List of vertices with the maximum degree
+        for vtx in nodes:
+            degree = G.degree(vtx)
+            if degree > maxDegree:
+                maxDegree = degree
+                maxVertex = [vtx]
+            elif degree == maxDegree:
+                maxVertex.append(vtx)
+
+
 
         return
 
