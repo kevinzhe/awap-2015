@@ -81,7 +81,8 @@ class Player(BasePlayer):
     def destinationCounts(self, state):
         pending = state.get_pending_orders()
         active = state.get_active_orders()
-        orders = map(lambda order: order.get_node(), pending).extend(map(lambda t: t[0].get_node(), active))
+        orders = map(lambda order: order.get_node(), pending)
+        orders.extend(map(lambda t: t[0].get_node(), active))
         nodeCounts = dict()
         for node in orders:
             if node not in nodeCounts: 
