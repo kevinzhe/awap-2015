@@ -86,12 +86,12 @@ class Player(BasePlayer):
 
     #return the next node where we can build a station
     def get_next_station_node(self, state):
-        destinations = destinationCounts(state)
+        destinations = self.destinationCounts(state)
         maxCount = 0
         curCount = 0
         station = None
-        for node in destinationCounts:
-            curCount = destinationCounts[node]
+        for node in destinations:
+            curCount = self.destinationCounts[node]
             if node not in self.stations:
                 if curCount >= maxCount:
                     maxCount = curCount
