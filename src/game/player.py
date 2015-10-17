@@ -108,7 +108,7 @@ class Player(BasePlayer):
         station = None
         for node in destinations:
             curCount = destinations[node]
-            if node not in self.stations:
+            if node not in self.stations and self.hasCloseNeighbor(state, node):
                 if curCount >= maxCount:
                     maxCount = curCount
                     station = node
@@ -146,6 +146,7 @@ class Player(BasePlayer):
         """
         
         G = state.get_graph()
+        #self.update_orders(G)
         self.money = state.get_money()
         
         if (self.money >= self.build_cost and
@@ -163,7 +164,7 @@ class Player(BasePlayer):
 
         if (est_time < 1000):
             s = self.get_next_station_node(state)
-            if s != None and not self.hasCloseNeighbor(state,s):
+            if s != None:
                 self.to_build.append(s)
 
         new_to_build = []
@@ -269,7 +270,7 @@ class Player(BasePlayer):
                     ])
         return None
     
-    def update_orders(state):
+    def update_orders(self, state):
         '''Return a list of ({PENDING},{FUFILLED}) tuples'''
         if self.order_counts is None:
             self.order_counts = [(set(), set()) for _ in range(GRAPH_SIZE)]
@@ -280,7 +281,7 @@ class Player(BasePlayer):
             (p,f) = self.order_counts[o.node]
             f.add(o.id)
 
-    def get_order_count(node_num):
+    def get_order_count(self, node_num):
         p,f = self.order_counts[node_num]
         return len(p) + len(f)
 
