@@ -109,7 +109,7 @@ class Player(BasePlayer):
         for node in destinations:
             curCount = destinations[node]
             if node not in self.stations:
-                if curCount >= maxCount:
+                if curCount >= maxCount and not self.hasCloseNeighbor(state, node):
                     maxCount = curCount
                     station = node
         return station
@@ -172,7 +172,7 @@ class Player(BasePlayer):
 
         if (est_time < 1000):
             s = self.get_next_station_node(state)
-            if s != None and not self.hasCloseNeighbor(state,s):
+            if s != None: # and not self.hasCloseNeighbor(state,s):
                 self.to_build.append(s)
 
         commands = []
@@ -252,7 +252,7 @@ class Player(BasePlayer):
         else:
             score += 10**15
         # prefer low degree nodes
-        score += self.degree_weight * len(G.neighbors(node))
+        score += self.degree_weight * G.degree(node)
         # don't go through other stations
         if G.node[node]['is_station']: score += self.station_weight
 
