@@ -29,6 +29,11 @@ class Player(BasePlayer):
 
     # order counting
     order_counts = None
+    
+    #station weights
+    st_degree_weight = 10
+    st_distance_weight = 15
+    st_order_weight = 5
 
     def __init__(self, state):
         """
@@ -102,6 +107,27 @@ class Player(BasePlayer):
 
     #return the next node where we can build a station
     def get_next_station_node(self, state):
+        g = state.get_graph()
+        scores = [0 for _ in range(GRAPH_SIZE)]
+        for n in g.nodes():
+            # deg
+            deg = g.degree(n)
+            scores[n] += (deg / 8.0) * self.st_degree_weight
+            # orders
+            order_count = self.get_order_count(n)
+            scores[n] += (order_count / (GRAPH_SIZE/ state.get_time() * ORDER_CHANCE)) * self.st_order_weight
+            # distance
+            station_lengths = [self.get_distance(n, st) for st in self.stations]
+            scores[n] += sum(station_lengths) / (len(station_lengths) * GRAPH_SIZE ** 0.5) * self.st_distance_weight
+
+        maxScore = 0
+        maxNode = None
+        for i in range(len(scores)):
+            if scores[i] > maxScore:
+                maxScore = scores[i]
+                maxNode = i
+        return maxNode
+
         destinations = self.destinationCounts(state)
         maxCount = 0
         curCount = 0
