@@ -33,7 +33,8 @@ class Player(BasePlayer):
                 maxVertex = [vtx]
             elif degree == maxDegree:
                 maxVertex.append(vtx)
-
+        self.maxVertex = maxVertex
+        
         self.degreeDict = dict()
         for vtx in nodes:
             degree = G.degree(vtx)
