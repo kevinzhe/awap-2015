@@ -93,7 +93,7 @@ class Player(BasePlayer):
         station = None
         for node in destinationCounts:
             curCount = destinationCounts[node]
-            if G.nodes()[node] not in self.to_build:
+            if G.nodes()[node] not in self.stations:
                 if curCount >= maxCount:
                     maxCount = curCount
                     station = node
