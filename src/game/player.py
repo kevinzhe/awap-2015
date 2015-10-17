@@ -21,6 +21,9 @@ class Player(BasePlayer):
     degree_weight = 10
     station_weight = 100
 
+    # station building
+    station_factor = 1.2
+
     def __init__(self, state):
         """
         Initializes your Player. You can set up persistent state, do analysis
@@ -63,6 +66,9 @@ class Player(BasePlayer):
 
         self.money = STARTING_MONEY
 
+        self.last_build = 0
+        self.build_money = STARTING_MONEY
+
         return
 
 
@@ -75,7 +81,7 @@ class Player(BasePlayer):
     def destinationCounts(self, state):
         pending = state.get_pending_orders()
         active = state.get_active_orders()
-        orders = map(lambda order: order.get_node(), pending).extend(map(lambda t: t[0].get_node(), f2))
+        orders = map(lambda order: order.get_node(), pending).extend(map(lambda t: t[0].get_node(), active))
         nodeCounts = dict()
         for node in orders:
             if node not in nodeCounts: 
@@ -91,7 +97,7 @@ class Player(BasePlayer):
         curCount = 0
         station = None
         for node in destinations:
-            curCount = self.destinationCounts[node]
+            curCount = destinations[node]
             if node not in self.stations:
                 if curCount >= maxCount:
                     maxCount = curCount
@@ -107,6 +113,7 @@ class Player(BasePlayer):
         return True
 
     def step(self, state):
+        # print self.money, self.build_money, self.build_cost
         """
         Determine actions based on the current state of the city. Called every
         time step. This function must take less than Settings.STEP_TIMEOUT
@@ -121,8 +128,24 @@ class Player(BasePlayer):
         """
 
         G = state.get_graph()
+        self.money = state.get_money()
+
+        if (self.money >= self.build_cost and
+            state.get_time() != self.last_build and
+            self.money != self.build_money):
+            slope = 1.0 * ((self.money - self.build_money) /
+                           (state.get_time() - self.last_build))
+            est_slope = slope * self.station_factor
+            est_time = self.find_time_overlap(slope, est_slope, state.get_time())
+            # print "    ", est_time
+        else:
+            est_time = 10000
 
         commands = []
+
+        if (est_time < 1000):
+            self.to_build.append(self.get_next_station_node(state))
+
         new_to_build = []
         for s in self.to_build:
             if self.money >= self.build_cost:
@@ -130,6 +153,8 @@ class Player(BasePlayer):
                 self.money -= self.build_cost
                 self.build_cost *= BUILD_FACTOR
                 self.stations.append(s)
+                self.last_build = state.get_time()
+                self.build_money = self.money
             else:
                 new_to_build.append(s)
 
@@ -149,6 +174,16 @@ class Player(BasePlayer):
                 self.add_path(paths, path)
 
         return commands
+
+    def find_new_station(self):
+        return random.randint(0, GRAPH_SIZE - 1)
+
+    def find_time_overlap(self, m1, m2, t2):
+        s = self.money
+        c = self.build_cost
+        t1 = self.last_build
+        p = self.build_money
+        return 1.0 * (s + m1 * t1 - m2 * t2 - c - p) / (m1 - m2)
 
     def add_path(self, paths, path):
         for i in range(len(path) - 1):
