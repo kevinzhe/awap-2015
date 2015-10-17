@@ -128,17 +128,17 @@ class Player(BasePlayer):
                 maxNode = i
         return maxNode
 
-        destinations = self.destinationCounts(state)
-        maxCount = 0
-        curCount = 0
-        station = None
-        for node in destinations:
-            curCount = destinations[node]
-            if node not in self.stations:
-                if curCount >= maxCount and not self.hasCloseNeighbor(state, node):
-                    maxCount = curCount
-                    station = node
-        return station
+        # destinations = self.destinationCounts(state)
+        # maxCount = 0
+        # curCount = 0
+        # station = None
+        # for node in destinations:
+        #     curCount = destinations[node]
+        #     if node not in self.stations:
+        #         if curCount >= maxCount and not self.hasCloseNeighbor(state, node):
+        #             maxCount = curCount
+        #             station = node
+        # return station
 
     def get_next_station_node_kevin(self):
         maxNode = None
