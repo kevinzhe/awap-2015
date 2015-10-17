@@ -116,7 +116,7 @@ class Player(BasePlayer):
                 scores[n] += (deg / 8.0) * self.st_degree_weight
                 # orders
                 order_count = self.get_order_count(n)
-                scores[n] += (order_count / (GRAPH_SIZE/ state.get_time() * ORDER_CHANCE)) * self.st_order_weight
+                scores[n] += (order_count / (float(GRAPH_SIZE)/ (state.get_time()+1) * ORDER_CHANCE)) * self.st_order_weight
                 # distance
                 station_lengths = [self.get_distance(n, st) for st in self.stations]
                 scores[n] += sum(station_lengths) / (len(station_lengths) * GRAPH_SIZE ** 0.5) * self.st_distance_weight

@@ -52,6 +52,12 @@ def grid_graph():
 
     return graph
 
+def get_graph():
+    n = GRAPH_SIZE
+    m = 10
+    p = 0.3
+    return nx.powerlaw_cluster_graph(n,m,m, GRAPH_SEED)
+
 def generate_graph():
     # Try these included graphs! Play around with the constants!
     # Feel free to define your own graph for testing.
