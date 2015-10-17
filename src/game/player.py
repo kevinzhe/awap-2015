@@ -166,18 +166,24 @@ class Player(BasePlayer):
 
         self.to_build = new_to_build
 
-        station_order_pairs = list(itertools.product(
-            state.get_pending_orders(), self.stations))
+        station_order_pairs = map(lambda a: (a[0], a[1], self.score_order(a[0], a[1], state)),
+            list(itertools.product(
+            state.get_pending_orders(), self.stations)))
 
-        station_order_pairs.sort(lambda a,b: self.cmp(a, b, state))
+        station_order_pairs = filter(lambda a: a[2] > 0, station_order_pairs)
+
+        station_order_pairs.sort(lambda a,b: self.cmp(a, b))
 
         paths = set()
+        orders_done = set()
 
-        for (order, station) in station_order_pairs:
-            path = self.find_path(G, station, order.get_node(), paths)
-            if path != None:
-                commands.append(self.send_command(order, path))
-                self.add_path(paths, path)
+        for (order, station, _) in station_order_pairs:
+            if (order not in orders_done):
+                path = self.find_path(G, station, order.get_node(), paths)
+                if path != None:
+                    commands.append(self.send_command(order, path))
+                    self.add_path(paths, path)
+                    orders_done.add(order)
 
         return commands
 
@@ -196,10 +202,11 @@ class Player(BasePlayer):
             paths.add((path[i], path[i+1]))
             paths.add((path[i+1], path[i]))
 
-    def cmp(self, a, b, state):
-        oa, sa = a
-        ob, sb = b
-        return -cmp(self.score_order(oa, sa, state), self.score_order(ob, sb, state))
+    def cmp(self, a, b):
+        # print "    ", a, b
+        _, _, a = a
+        _, _, b = b
+        return -cmp(a, b)
 
     def score_order(self, order, station, state):
         d = self.get_distance(order.get_node(), station)
