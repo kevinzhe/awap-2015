@@ -33,9 +33,6 @@ class Player(BasePlayer):
                 maxVertex = [vtx]
             elif degree == maxDegree:
                 maxVertex.append(vtx)
-
-
-
         return
 
     # Checks if we can use a given path
