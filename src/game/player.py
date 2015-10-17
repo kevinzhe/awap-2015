@@ -88,8 +88,8 @@ class Player(BasePlayer):
         nodeCounts = dict()
         for node in orders:
             if node not in nodeCounts: 
-                nodeCounts[nodes] = 0
-            nodeCounts[nodes] = 1
+                nodeCounts[node] = 0
+            nodeCounts[node] = 1
         return nodeCounts
 
 
