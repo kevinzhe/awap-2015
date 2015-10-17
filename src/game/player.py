@@ -2,6 +2,7 @@ import networkx as nx
 import random
 from base_player import BasePlayer
 from settings import *
+import math
 
 class Player(BasePlayer):
     """
@@ -11,6 +12,7 @@ class Player(BasePlayer):
 
     # You can set up static state here
     has_built_station = False
+    distance_heuristic = 'MANHATTAN'
 
     def __init__(self, state):
         """
@@ -21,22 +23,48 @@ class Player(BasePlayer):
         state : State
             The initial state of the game. See state.py for more information.
         """
+
+        G = state.get_graph()
         
         #Getting the vertex with the maximum degree
         nodes = G.nodes()
         maxDegree = 0
-        maxVertex = [] #List of vertices with the maximum degree
+        self.maxVertex = [] #List of vertices with the maximum degree
         for vtx in nodes:
             degree = G.degree(vtx)
             if degree > maxDegree:
                 maxDegree = degree
-                maxVertex = [vtx]
+                self.maxVertex = [vtx]
             elif degree == maxDegree:
-                maxVertex.append(vtx)
+                self.maxVertex.append(vtx)
 
+        # pick closest to center
+        # TODO: maybe change to heuristic
+        self.sideLen = int(math.ceil(math.sqrt(GRAPH_SIZE)))
+        center = GRAPH_SIZE / 2
+        minDist = None
+        bestNode = None
+        for v in self.maxVertex:
+            dist = self.get_distance(center, v)
+            if minDist is None or dist < minDist:
+                bestNode = v
+                minDist = dist
 
+        self.stations = [bestNode]
+        self.to_build = [bestNode]
+
+        self.build_cost = INIT_BUILD_COST
 
         return
+
+    # get the distance between two nodes
+    def get_distance(self, node1, node2):
+        x1, y1 = node1 / self.sideLen, node1 % self.sideLen
+        x2, y2 = node2 / self.sideLen, node2 % self.sideLen
+        if self.distance_heuristic == 'MANHATTAN':
+            return abs(x1 - x2) + abs(y1 - y2)
+        else:
+            return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
 
     # Checks if we can use a given path
     def path_is_valid(self, state, path):
@@ -60,23 +88,16 @@ class Player(BasePlayer):
             self.build_command. The commands are evaluated in order.
         """
 
-        # We have implemented a naive bot for you that builds a single station
-        # and tries to find the shortest path from it to first pending order.
-        # We recommend making it a bit smarter ;-)
-
-        graph = state.get_graph()
-        station = graph.nodes()[0]
-
         commands = []
-        if not self.has_built_station:
-            commands.append(self.build_command(station))
-            self.has_built_station = True
+        new_to_build = []
+        for s in self.to_build:
+            if self.money >= self.build_cost
+                commands.append(self.build_command(s))
+                self.money -= self.build_cost
+                self.build_cost *= BUILD_FACTOR
+            else:
+                new_to_build.append(s)
 
-        pending_orders = state.get_pending_orders()
-        if len(pending_orders) != 0:
-            order = random.choice(pending_orders)
-            path = nx.shortest_path(graph, station, order.get_node())
-            if self.path_is_valid(state, path):
-                commands.append(self.send_command(order, path))
+        self.to_build = new_to_build
 
         return commands
