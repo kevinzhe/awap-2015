@@ -66,15 +66,18 @@ class Player(BasePlayer):
                 self.degreeDict[degree] = set()
             self.degreeDict[degree].add(vtx)
 
-        self.distances = nx.all_pairs_shortest_path_length(G,
-            ((SCORE_MEAN + SCORE_VAR) / DECAY_FACTOR)
-        )
+        self.distances = nx.all_pairs_shortest_path_length(G)
 
         self.money = STARTING_MONEY
 
         self.last_build = 0
         self.build_money = STARTING_MONEY
 
+        self.maxPathLength = 0
+        for n1 in nodes:
+            for n2 in nodes:
+                if self.get_distance(n1, n2) >= self.maxPathLength:
+                    self.maxPathLength = self.get_distance(n1, n2)
         return
 
 
@@ -112,7 +115,12 @@ class Player(BasePlayer):
         return station
 
     def hasCloseNeighbor(self, state, station):
-        pass
+        G = state.get_graph()
+        for node in self.stations:
+            distance = self.get_distance(station, node)
+            if distance < self.maxPathLength/4:
+                return True
+        return False
 
     # Checks if we can use a given path
     def path_is_valid(self, state, path):
@@ -155,7 +163,7 @@ class Player(BasePlayer):
 
         if (est_time < 1000):
             s = self.get_next_station_node(state)
-            if s != None:
+            if s != None and not self.hasCloseNeighbor(state,s):
                 self.to_build.append(s)
 
         new_to_build = []
