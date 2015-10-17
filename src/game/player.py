@@ -3,6 +3,8 @@ import random
 from base_player import BasePlayer
 from settings import *
 import math
+import heapq
+import itertools
 
 class Player(BasePlayer):
     """
@@ -13,6 +15,11 @@ class Player(BasePlayer):
     # You can set up static state here
     has_built_station = False
     distance_heuristic = 'MANHATTAN'
+
+    # Heuristic Weightings
+    distance_weight = 10
+    degree_weight = 10
+    station_weight = 100
 
     def __init__(self, state):
         """
@@ -38,20 +45,8 @@ class Player(BasePlayer):
             elif degree == maxDegree:
                 self.maxVertex.append(vtx)
 
-        # pick closest to center
-        # TODO: maybe change to heuristic
-        self.sideLen = int(math.ceil(math.sqrt(GRAPH_SIZE)))
-        center = GRAPH_SIZE / 2
-        minDist = None
-        bestNode = None
-        for v in self.maxVertex:
-            dist = self.get_distance(center, v)
-            if minDist is None or dist < minDist:
-                bestNode = v
-                minDist = dist
-
-        self.stations = [bestNode]
-        self.to_build = [bestNode]
+        self.stations = []
+        self.to_build = [self.maxVertex[len(self.maxVertex) / 2]]
 
         self.build_cost = INIT_BUILD_COST
         
@@ -61,19 +56,20 @@ class Player(BasePlayer):
             if degree not in self.degreeDict:
                 self.degreeDict[degree] = set()
             self.degreeDict[degree].add(vtx)
-            
+
+        self.distances = nx.all_pairs_shortest_path_length(G,
+            ((SCORE_MEAN + SCORE_VAR) / DECAY_FACTOR)
+        )
+
+        self.money = STARTING_MONEY
+
         return
 
 
 
     # get the distance between two nodes
     def get_distance(self, node1, node2):
-        x1, y1 = node1 / self.sideLen, node1 % self.sideLen
-        x2, y2 = node2 / self.sideLen, node2 % self.sideLen
-        if self.distance_heuristic == 'MANHATTAN':
-            return abs(x1 - x2) + abs(y1 - y2)
-        else:
-            return math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2)
+        return self.distances.get(node1).get(node2)
 
     # check distance between destination with most degree and curStation
     def destinationCounts(self, state):
@@ -125,16 +121,89 @@ class Player(BasePlayer):
             self.build_command. The commands are evaluated in order.
         """
 
+        G = state.get_graph()
+
         commands = []
         new_to_build = []
         for s in self.to_build:
-            if self.money >= self.build_cost
+            if self.money >= self.build_cost:
                 commands.append(self.build_command(s))
                 self.money -= self.build_cost
                 self.build_cost *= BUILD_FACTOR
+                self.stations.append(s)
             else:
                 new_to_build.append(s)
 
         self.to_build = new_to_build
 
+        station_order_pairs = list(itertools.product(
+            state.get_pending_orders(), self.stations))
+
+        station_order_pairs.sort(lambda a,b: self.cmp(a, b, state))
+
+        paths = set()
+
+        for (order, station) in station_order_pairs:
+            path = self.find_path(G, station, order.get_node(), paths)
+            if path != None:
+                commands.append(self.send_command(order, path))
+                self.add_path(paths, path)
+
         return commands
+
+    def add_path(self, paths, path):
+        for i in range(len(path) - 1):
+            paths.add((path[i], path[i+1]))
+            paths.add((path[i+1], path[i]))
+
+    def cmp(self, a, b, state):
+        oa, sa = a
+        ob, sb = b
+        return -cmp(self.score_order(oa, sa, state), self.score_order(ob, sb, state))
+
+    def score_order(self, order, station, state):
+        d = self.get_distance(order.get_node(), station)
+        if d == None:
+            return 0
+        else:
+            return (order.get_money() - DECAY_FACTOR *
+                (state.time - order.get_time_created() + d))
+
+    def score_node(self, G, node, dest):
+        # low score is good
+        score = 0
+        # prefer short paths
+        d = self.get_distance(node, dest)
+        if d != None:
+            score += self.distance_weight * d
+        else:
+            score += 10**15
+        # prefer low degree nodes
+        score += self.degree_weight * len(G.neighbors(node))
+        # don't go through other stations
+        if G.node[node]['is_station']: score += self.station_weight
+
+        return score
+
+    def find_path(self, G, src, dest, paths):
+        # a star
+        queue = []
+        heapq.heappush(queue, [0, src, [src]])
+        seen = set()
+        while len(queue) > 0:
+            _, node, path = heapq.heappop(queue)
+            if node in seen: continue
+            seen.add(node)
+            if node == dest:
+                return path
+            neighbors = G.neighbors(node)
+            for neighbor in neighbors:
+                if not (G.edge[node][neighbor]['in_use'] or 
+                        (node, neighbor) in paths or
+                        (neighbor, node) in paths):
+                    heapq.heappush(queue, [
+                        self.score_node(G, neighbor, dest),
+                        neighbor,
+                        path + [neighbor],
+                    ])
+        return None
