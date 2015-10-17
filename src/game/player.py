@@ -5,6 +5,7 @@ from settings import *
 import math
 import heapq
 import itertools
+import matplotlib.pyplot as plt
 
 class Player(BasePlayer):
     """
@@ -20,6 +21,9 @@ class Player(BasePlayer):
     distance_weight = 10
     degree_weight = 10
     station_weight = 100
+
+    # visualization for $$$$$
+    money_list = []
 
     def __init__(self, state):
         """
@@ -92,6 +96,11 @@ class Player(BasePlayer):
         """
 
         G = state.get_graph()
+        self.money_list.append(state.get_money())
+        if state.get_time() == 999:
+            plt.plot(range(1000), self.money_list)
+            plt.show()
+            raise SystemExit
 
         commands = []
         new_to_build = []
